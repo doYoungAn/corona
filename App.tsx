@@ -8,7 +8,7 @@
  * @format
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -16,6 +16,7 @@ import {
   View,
   Text,
   StatusBar,
+  PermissionsAndroid
 } from 'react-native';
 
 import {
@@ -26,9 +27,29 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
+import DeviceInfo from 'react-native-device-info';
+
 declare var global: {HermesInternal: null | {}};
 
 const App = () => {
+
+  useEffect(() => {
+    console.log('init App');
+    DeviceInfo.getAndroidId().then((id) => {
+      console.log(`id - ${id}`)
+    });
+    PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE
+    ).then((value) => {
+      console.log(`value - ${value}`);
+      DeviceInfo.getPhoneNumber().then((num) => {
+        console.log(`num - ${num}`);
+      });
+    }).catch((err) => {
+
+    });
+  }, []);
+
   return (
     <>
       <StatusBar barStyle="dark-content" />
