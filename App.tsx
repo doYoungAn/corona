@@ -31,6 +31,7 @@ import {
 
 import DeviceInfo from 'react-native-device-info';
 import WifiManager from "react-native-wifi-reborn";
+import BackgroundFetch from 'react-native-background-fetch';
 
 declare var global: {HermesInternal: null | {}};
 
@@ -77,8 +78,133 @@ const App = () => {
         },
         error =>  console.log(error)
       );
+      runBackground();
     })();
   }, []);
+
+  const runBackground = () => {
+    console.log('runBackground func fire!!');
+    BackgroundFetch.status((status) => {
+      switch(status) {
+        case BackgroundFetch.STATUS_RESTRICTED:
+          console.log("BackgroundFetch restricted");
+          break;
+        case BackgroundFetch.STATUS_DENIED:
+          console.log("BackgroundFetch denied");
+          break;
+        case BackgroundFetch.STATUS_AVAILABLE:
+          console.log("BackgroundFetch is enabled");
+          break;
+      }
+    });
+    BackgroundFetch.configure(
+      {
+        minimumFetchInterval: 15,     // <-- minutes (15 is minimum allowed)
+        // Android options
+        forceAlarmManager: false,     // <-- Set true to bypass JobScheduler.
+        stopOnTerminate: false,
+        startOnBoot: true,
+        requiredNetworkType: BackgroundFetch.NETWORK_TYPE_NONE, // Default
+        requiresCharging: false,      // Default
+        requiresDeviceIdle: false,    // Default
+        requiresBatteryNotLow: false, // Default
+        requiresStorageNotLow: false,  // Default
+        enableHeadless: true
+      },
+      async (taskId) => {
+        console.log("[js] Received background-fetch event: ", taskId);
+        // WifiManager.loadWifiList(
+        //   wifiList => {
+        //       let wifiArray =  JSON.parse(wifiList);
+        //       const a = wifiArray.map((value: any, index: any) =>
+        //           {
+        //             console.log(`Wifi ${index  +  1} - ${value.SSID}`);
+        //             return `Wifi ${index  +  1} - ${value.SSID}`;
+        //             // console.log(JSON.stringify(value));
+        //           }
+        //       );
+        //       BackgroundFetch.finish(taskId);
+        //       // setItems(a)
+        //   },
+        //   error =>  {
+        //     console.log(error)
+        //     BackgroundFetch.finish(taskId);
+        //   }
+        // );
+        // fetch('http://192.168.1.6:3000/wifi', {
+        //   method: 'POST',
+        //   headers: {
+        //     Accept: 'application/json',
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({ wifis: 'fire background fetch' }) 
+        // })
+        // .then(response => response.json())
+        // .then((res) => {
+        //   console.log('response', res);
+        //   BackgroundFetch.finish(taskId);
+        // }).catch((err) => {
+        //   console.log('err', err);
+        //   BackgroundFetch.finish(taskId);
+        // });
+      },
+      (error) => {
+
+      }
+    )
+    BackgroundFetch.registerHeadlessTask(MyHeadlessTask);
+  }
+
+  let MyHeadlessTask = async (event: any) => {
+    // Get task id from event {}:
+    let taskId = event.taskId;
+    console.log('[BackgroundFetch HeadlessTask] start: ', taskId);
+  
+    // Perform an example HTTP request.
+    // Important:  await asychronous tasks when using HeadlessJS.
+    let response = await fetch('https://facebook.github.io/react-native/movies.json');
+    let responseJson = await response.json();
+    console.log('[BackgroundFetch HeadlessTask] response: ', responseJson);
+    // fetch('http://192.168.1.6:3000/wifi', {
+    //   method: 'POST',
+    //   headers: {
+    //     Accept: 'application/json',
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ wifis: 'fire background fetch' }) 
+    // })
+    // .then(response => response.json())
+    // .then((res) => {
+    //   console.log('response', res);
+    //   BackgroundFetch.finish(taskId);
+    // }).catch((err) => {
+    //   console.log('err', err);
+    //   BackgroundFetch.finish(taskId);
+    // });
+    WifiManager.loadWifiList(
+      wifiList => {
+          let wifiArray =  JSON.parse(wifiList);
+          const a = wifiArray.map((value: any, index: any) =>
+              {
+                console.log(`Wifi ${index  +  1} - ${value.SSID}`);
+                return `Wifi ${index  +  1} - ${value.SSID}`;
+                // console.log(JSON.stringify(value));
+              }
+          );
+          BackgroundFetch.finish(taskId);
+          // setItems(a)
+      },
+      error =>  {
+        console.log(error)
+        BackgroundFetch.finish(taskId);
+      }
+    );
+  
+    // Required:  Signal to native code that your task is complete.
+    // If you don't do this, your app could be terminated and/or assigned
+    // battery-blame for consuming too much time in background.
+    // BackgroundFetch.finish(taskId);
+  }
 
   const onClick = () => {
     console.log('click!!')
@@ -114,8 +240,8 @@ const App = () => {
         title="호출 테스트"
       />
       <ScrollView>
-        {items.map((item) => (
-          <Text>{item}</Text>
+        {items.map((item, index) => (
+          <Text key={index}>{item}</Text>
         ))}
       </ScrollView>
       {/* <StatusBar barStyle="dark-content" />

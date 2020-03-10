@@ -38,6 +38,8 @@ target 'coronaApp' do
 
   pod 'RNWifi', :path => '../node_modules/react-native-wifi-reborn'
 
+  pod 'RNBackgroundFetch', :path => '../node_modules/react-native-background-fetch'
+
   target 'coronaAppTests' do
     inherit! :search_paths
     # Pods for testing
