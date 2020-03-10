@@ -8,7 +8,7 @@
  * @format
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -17,7 +17,8 @@ import {
   Text,
   StatusBar,
   PermissionsAndroid,
-  BackHandler
+  BackHandler,
+  Button
 } from 'react-native';
 
 import {
@@ -34,6 +35,8 @@ import WifiManager from "react-native-wifi-reborn";
 declare var global: {HermesInternal: null | {}};
 
 const App = () => {
+
+  const [items, setItems] = useState<string[]>([]);
 
   useEffect(() => {
     console.log('init App');
@@ -63,21 +66,59 @@ const App = () => {
       WifiManager.loadWifiList(
         wifiList => {
             let wifiArray =  JSON.parse(wifiList);
-            wifiArray.map((value: any, index: any) =>
+            const a = wifiArray.map((value: any, index: any) =>
                 {
                   console.log(`Wifi ${index  +  1} - ${value.SSID}`);
+                  return `Wifi ${index  +  1} - ${value.SSID}`;
                   // console.log(JSON.stringify(value));
                 }
             );
+            setItems(a)
         },
         error =>  console.log(error)
       );
     })();
   }, []);
 
+  const onClick = () => {
+    console.log('click!!')
+    // fetch('http://192.168.1.6:3000/user', { method: 'GET' })
+    // .then(response => response.json())
+    // .then((res) => {
+    //   console.log('response', res);
+    // }).catch((err) => {
+    //   console.log('err', err);
+    // });
+
+    fetch('http://192.168.1.6:3000/wifi', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ wifis: items }) 
+    })
+    .then(response => response.json())
+    .then((res) => {
+      console.log('response', res);
+    }).catch((err) => {
+      console.log('err', err);
+    });
+  }
+
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <Text>Wifi list</Text>
+      <Button
+        onPress={() => {onClick()}}
+        title="호출 테스트"
+      />
+      <ScrollView>
+        {items.map((item) => (
+          <Text>{item}</Text>
+        ))}
+      </ScrollView>
+      {/* <StatusBar barStyle="dark-content" />
       <SafeAreaView>
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
@@ -117,7 +158,7 @@ const App = () => {
             <LearnMoreLinks />
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </SafeAreaView> */}
     </>
   );
 };
